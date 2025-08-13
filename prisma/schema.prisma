@@ -1,0 +1,455 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres", "views"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique @db.VarChar(255)
+  password         String            @db.VarChar(255)
+  firstName        String            @db.VarChar(100)
+  lastName         String            @db.VarChar(100)
+  role             UserRole          @default(MEMBER)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime          @updatedAt @db.Timestamptz(6)
+  auditLogs        AuditLog[]
+  communications   Communication[]
+
+  member           Member?
+
+  sessions         Session[]
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Member {
+  id                     String            @id @default(cuid())
+  userId                 String?           @unique
+  subcity                String?           @db.VarChar(100)
+  kebele                 String?           @db.VarChar(100)
+  specialPlaceName       String?           @db.VarChar(200)
+  city                   String?           @db.VarChar(100)
+  state                  String?           @db.VarChar(50)
+  zipCode                String?           @db.VarChar(10)
+  profileImage           String?           @db.VarChar(500)
+  dateOfBirth            DateTime?         @db.Date
+  gender                 Gender?
+  maritalStatus          MaritalStatus?
+  numberOfChildren       Int?              @default(0)
+  childrenAges           String?
+  childrenInfo           String?
+  profession             String?           @db.VarChar(200)
+  uniqueSkills           String?
+  educationLevel         EducationLevel?
+  membershipType         MembershipType    @default(REGULAR)
+  status                 MemberStatus      @default(ACTIVE)
+  notes                  String?
+  createdAt              DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt              DateTime          @updatedAt @db.Timestamptz(6)
+  email                  String?           @db.VarChar(255)
+
+  familyId               String?
+  saleGroupId            String?
+  firstName              String            @db.VarChar(100)
+  middleName             String?           @db.VarChar(100)
+  lastName               String            @db.VarChar(100)
+  membershipDate         DateTime          @default(now()) @db.Date
+  phone                  String?           @db.VarChar(20)
+  communicationsReceived Communication[]   @relation("CommunicationRecipient")
+  donations              Donation[]
+
+  ministries             MemberMinistry[]
+  family                 Family?           @relation(fields: [familyId], references: [id])
+  saleGroup              SaleGroup?        @relation(fields: [saleGroupId], references: [id])
+  user                   User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([firstName, lastName])
+  @@index([email])
+  @@index([phone])
+  @@index([membershipType])
+  @@index([status])
+  @@index([familyId])
+  @@index([saleGroupId])
+  @@index([membershipDate])
+  @@index([createdAt])
+  @@map("members")
+}
+
+model Family {
+  id           String   @id @default(cuid())
+  familyName   String   @db.VarChar(100)
+  headOfFamily String?  @db.VarChar(100)
+  address      String?
+  city         String?  @db.VarChar(100)
+  state        String?  @db.VarChar(50)
+  zipCode      String?  @db.VarChar(10)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+  email        String?  @db.VarChar(255)
+  notes        String?
+  phone        String?  @db.VarChar(20)
+  members      Member[]
+
+  @@index([familyName])
+  @@index([email])
+  @@index([phone])
+  @@index([createdAt])
+  @@map("families")
+}
+
+
+
+
+
+model Communication {
+  id          String            @id @default(cuid())
+  type        CommunicationType
+  title       String            @db.VarChar(200)
+  content     String
+  status      MessageStatus     @default(DRAFT)
+  scheduledAt DateTime?         @db.Timestamptz(6)
+  sentAt      DateTime?         @db.Timestamptz(6)
+  createdAt   DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @db.Timestamptz(6)
+  attachments String[]          @default([])
+  priority    String?           @default("NORMAL") @db.VarChar(20)
+  readAt      DateTime?         @db.Timestamptz(6)
+  recipientId String?
+  senderId    String
+  tags        String[]          @default([])
+  recipient   Member?           @relation("CommunicationRecipient", fields: [recipientId], references: [id])
+  sender      User              @relation(fields: [senderId], references: [id])
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([type])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([sentAt])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("communications")
+}
+
+model Ministry {
+  id          String           @id @default(cuid())
+  name        String           @unique @db.VarChar(100)
+  description String?
+  leaderId    String?          @db.VarChar(100)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime         @updatedAt @db.Timestamptz(6)
+  capacity    Int?
+  location    String?          @db.VarChar(200)
+  meetingDay  String?          @db.VarChar(20)
+  meetingTime String?          @db.VarChar(20)
+  notes       String?
+  members     MemberMinistry[]
+
+  @@index([name])
+  @@index([isActive])
+  @@index([leaderId])
+  @@index([createdAt])
+  @@map("ministries")
+}
+
+model MemberMinistry {
+  id         String   @id @default(cuid())
+  memberId   String
+  ministryId String
+  role       String?  @default("Member") @db.VarChar(50)
+  joinedAt   DateTime @default(now()) @db.Date
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  isActive   Boolean  @default(true)
+  notes      String?
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  ministry   Ministry @relation(fields: [ministryId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, ministryId])
+  @@index([memberId])
+  @@index([ministryId])
+  @@index([isActive])
+  @@index([role])
+  @@index([joinedAt])
+  @@index([createdAt])
+  @@map("member_ministries")
+}
+
+model Donation {
+  id                 String        @id @default(cuid())
+  memberId           String
+  amount             Decimal       @db.Decimal(10, 2)
+  donationType       DonationType
+  reference          String?       @unique @db.VarChar(100)
+  notes              String?
+  createdAt          DateTime      @default(now()) @db.Timestamptz(6)
+  donationDate       DateTime      @default(now()) @db.Date
+  fiscalYear         Int
+  isRecurring        Boolean       @default(false)
+  paymentMethod      PaymentMethod
+  recurringFrequency String?       @db.VarChar(50)
+  updatedAt          DateTime      @updatedAt @db.Timestamptz(6)
+  member             Member        @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([donationType])
+  @@index([paymentMethod])
+  @@index([donationDate])
+  @@index([fiscalYear])
+  @@index([isRecurring])
+  @@index([amount])
+  @@index([createdAt])
+  @@map("donations")
+}
+
+
+
+model Zone {
+  id          String      @id @default(cuid())
+  name        String      @unique @db.VarChar(100)
+  description String?
+  leaderName  String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @db.Timestamptz(6)
+  notes       String?
+  
+  saleGroups  SaleGroup[]
+
+  @@index([name])
+  @@index([isActive])
+  @@index([leaderName])
+  @@index([createdAt])
+  @@map("zones")
+}
+
+model SaleGroup {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(100)
+  leaderName  String   @db.VarChar(100)
+  zoneId      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  notes       String?
+  
+  zone        Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  members     Member[]
+
+  @@unique([name, zoneId])
+  @@index([name])
+  @@index([leaderName])
+  @@index([zoneId])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("sale_groups")
+}
+
+model ChurchSettings {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  category    String?  @db.VarChar(50)
+  description String?
+  isPublic    Boolean  @default(false)
+  key         String   @unique @db.VarChar(100)
+  value       String
+
+  @@index([key])
+  @@index([category])
+  @@index([isPublic])
+  @@map("church_settings")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   @db.VarChar(50)
+  tableName String   @db.VarChar(50)
+  recordId  String?  @db.VarChar(50)
+  oldValues String?
+  newValues String?
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([tableName])
+  @@index([recordId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  token      String    @unique @db.VarChar(255)
+  expiresAt  DateTime  @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  ipAddress  String?   @db.VarChar(45)
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @db.Timestamptz(6)
+  userAgent  String?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@index([isActive])
+  @@index([lastUsedAt])
+  @@index([createdAt])
+  @@map("sessions")
+}
+
+model Backup {
+  id          String       @id @default(cuid())
+  filename    String       @db.VarChar(255)
+  filePath    String       @db.VarChar(500)
+  fileSize    BigInt
+  status      BackupStatus @default(IN_PROGRESS)
+  completedAt DateTime?    @db.Timestamptz(6)
+  checksum    String?      @db.VarChar(64)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+  createdById String
+  description String?
+  expiresAt   DateTime?    @db.Timestamptz(6)
+  type        BackupType
+
+  @@index([type])
+  @@index([status])
+  @@index([createdById])
+  @@index([createdAt])
+  @@index([completedAt])
+  @@index([expiresAt])
+  @@map("backups")
+}
+
+enum UserRole {
+  ADMIN
+  PASTOR
+  LEADER
+  MEMBER
+  VISITOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  SEPARATED
+}
+
+enum MembershipType {
+  REGULAR
+  ASSOCIATE
+  HONORARY
+  YOUTH
+  CHILD
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  TRANSFERRED
+  DECEASED
+  SUSPENDED
+}
+
+enum EducationLevel {
+  PRIMARY
+  SECONDARY
+  DIPLOMA
+  BACHELOR
+  MASTER
+  PHD
+  VOCATIONAL
+  OTHER
+}
+
+enum FamilyRelation {
+  HEAD
+  SPOUSE
+  CHILD
+  PARENT
+  SIBLING
+  RELATIVE
+  OTHER
+}
+
+
+
+
+
+
+
+enum CommunicationType {
+  ANNOUNCEMENT
+  EMAIL
+  SMS
+  NEWSLETTER
+  PUSH_NOTIFICATION
+}
+
+enum MessageStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum DonationType {
+  TITHE
+  OFFERING
+  SPECIAL_OFFERING
+  BUILDING_FUND
+  MISSIONS
+  CHARITY
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  CHECK
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  ONLINE
+  MOBILE_PAYMENT
+}
+
+
+
+enum BackupType {
+  MANUAL
+  SCHEDULED
+  AUTOMATIC
+}
+
+enum BackupStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}

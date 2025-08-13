@@ -1,0 +1,23 @@
+node_modules
+build
+dist
+.git
+.trae
+.log
+
+# Desktop-specific files
+electron/
+app_data/
+prisma/church_management.db
+
+# Test and debug files
+test-*.html
+test-*.js
+check-storage.js
+debug-image-upload.html
+
+# Scripts
+scripts/
+
+# Large files
+package-lock.json
