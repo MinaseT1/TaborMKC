@@ -9,7 +9,7 @@
   "lint": "next lint",
   "db:migrate": "tsx scripts/migrate-db.ts migrate",
   "db:generate": "tsx scripts/migrate-db.ts generate",
-  "db:seed": "tsx scripts/migrate-db.ts seed",
+  "db:seed": "tsx scripts/seed.ts",
   "db:backup": "tsx scripts/migrate-db.ts backup",
   "db:validate": "tsx scripts/migrate-db.ts validate",
   "db:cleanup": "tsx scripts/migrate-db.ts cleanup",
