@@ -174,7 +174,7 @@ export default function RegistrationPage() {
   const fetchSaleGroups = async (zoneId: string) => {
     try {
       setSaleGroupsLoading(true);
-      const response = await fetch(`/api/sale-groups?zoneId=${zoneId}`);
+      const response = await fetch(`/api/zones/${zoneId}/sale-groups`);
       const data = await response.json();
       
       if (response.ok && data.saleGroups) {

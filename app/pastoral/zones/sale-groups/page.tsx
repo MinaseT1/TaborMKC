@@ -91,7 +91,7 @@ export default function SaleGroupsPage() {
 
   const fetchSaleGroups = async (zoneId: string) => {
     try {
-      const response = await fetch(`/api/sale-groups?zoneId=${zoneId}`)
+      const response = await fetch(`/api/zones/${zoneId}/sale-groups`)
       if (response.ok) {
         const data = await response.json()
         setSaleGroups(data.saleGroups || [])
@@ -144,7 +144,7 @@ export default function SaleGroupsPage() {
     }
 
     try {
-      const response = await fetch('/api/sale-groups', {
+      const response = await fetch(`/api/zones/${formData.zoneId}/sale-groups`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -152,8 +152,7 @@ export default function SaleGroupsPage() {
         body: JSON.stringify({
           name: formData.name,
           leaderName: formData.leaderName || null,
-          notes: formData.notes,
-          zoneId: formData.zoneId
+          notes: formData.notes
         }),
       })
 
