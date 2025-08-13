@@ -293,7 +293,7 @@ export default function ZonesPage() {
           <Card 
             key={zone.id} 
             className="relative cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => router.push(`/pastoral/zones/${zone.id}`)}
+            onClick={() => router.push(`/pastoral/zones/sale-groups?zoneId=${zone.id}`)}
           >
             <CardHeader>
               <div className="flex justify-between items-start">
