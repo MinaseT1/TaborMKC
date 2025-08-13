@@ -495,22 +495,29 @@ function generateMinistryData(period: string) {
 
 async function getZoneStats(startDate: Date, endDate: Date) {
   try {
-    // Get all zones with their current member counts
+    // Get all zones with their current member counts and sale groups
     const zones = await prisma.zone.findMany({
       where: {
         isActive: true
       },
       include: {
-        members: {
+        saleGroups: {
           where: {
-            status: 'ACTIVE'
+            isActive: true
+          },
+          include: {
+            members: {
+              where: {
+                status: 'ACTIVE'
+              }
+            }
           }
         },
         _count: {
           select: {
-            members: {
+            saleGroups: {
               where: {
-                status: 'ACTIVE'
+                isActive: true
               }
             }
           }
@@ -518,8 +525,11 @@ async function getZoneStats(startDate: Date, endDate: Date) {
       }
     })
 
-    // Calculate total members across all zones
-    const totalMembers = zones.reduce((sum, zone) => sum + zone._count.members, 0)
+    // Calculate total members and sale groups across all zones
+    const totalMembers = zones.reduce((sum, zone) => {
+      return sum + zone.saleGroups.reduce((groupSum, group) => groupSum + group.members.length, 0)
+    }, 0)
+    const totalSaleGroups = zones.reduce((sum, zone) => sum + zone._count.saleGroups, 0)
     const totalZones = zones.length
     const averageMembersPerZone = totalZones > 0 ? Math.round(totalMembers / totalZones) : 0
 
@@ -531,7 +541,7 @@ async function getZoneStats(startDate: Date, endDate: Date) {
     const currentPeriodMembers = await prisma.member.count({
       where: {
         status: 'ACTIVE',
-        zoneId: { not: null },
+        saleGroupId: { not: null },
         createdAt: {
           gte: startDate,
           lte: endDate
@@ -542,7 +552,7 @@ async function getZoneStats(startDate: Date, endDate: Date) {
     const previousPeriodMembers = await prisma.member.count({
       where: {
         status: 'ACTIVE',
-        zoneId: { not: null },
+        saleGroupId: { not: null },
         createdAt: {
           gte: previousMonthStart,
           lt: startDate
@@ -556,14 +566,16 @@ async function getZoneStats(startDate: Date, endDate: Date) {
 
     // Calculate real zone statistics with growth
     const zoneStatsPromises = zones.map(async (zone) => {
-      // Get current members count
-      const currentMembers = zone._count.members
+      // Get current members count through sale groups
+      const currentMembers = zone.saleGroups.reduce((sum, group) => sum + group.members.length, 0)
       
-      // Get previous period members count for this zone
+      // Get previous period members count for this zone through sale groups
       const previousMembers = await prisma.member.count({
         where: {
           status: 'ACTIVE',
-          zoneId: zone.id,
+          saleGroupId: {
+            in: zone.saleGroups.map(sg => sg.id)
+          },
           createdAt: {
             lt: startDate
           }
@@ -597,7 +609,7 @@ async function getZoneStats(startDate: Date, endDate: Date) {
       const monthMembers = await prisma.member.count({
         where: {
           status: 'ACTIVE',
-          zoneId: { not: null },
+          saleGroupId: { not: null },
           createdAt: {
             lte: monthEnd
           }
@@ -611,15 +623,19 @@ async function getZoneStats(startDate: Date, endDate: Date) {
     }
 
     // Calculate zone distribution
-    const zoneDistribution = zones.map(zone => ({
-      zone: zone.name,
-      members: zone._count.members,
-      percentage: totalMembers > 0 ? Math.round((zone._count.members / totalMembers) * 100) : 0
-    }))
+    const zoneDistribution = zones.map(zone => {
+      const zoneMembers = zone.saleGroups.reduce((sum, group) => sum + group.members.length, 0)
+      return {
+        zone: zone.name,
+        members: zoneMembers,
+        percentage: totalMembers > 0 ? Math.round((zoneMembers / totalMembers) * 100) : 0
+      }
+    })
 
     return {
       totalZones,
       totalMembers,
+      totalSaleGroups,
       averageMembersPerZone,
       monthlyGrowth,
       zoneStats,
@@ -631,6 +647,7 @@ async function getZoneStats(startDate: Date, endDate: Date) {
     return {
       totalZones: 0,
       totalMembers: 0,
+      totalSaleGroups: 0,
       averageMembersPerZone: 0,
       monthlyGrowth: 0,
       zoneStats: [],

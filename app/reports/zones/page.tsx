@@ -19,6 +19,7 @@ import { Download, Filter, Search, Users, MapPin, TrendingUp, Activity, Award } 
 interface ZoneData {
   totalZones: number
   totalMembers: number
+  totalSaleGroups: number
   averageMembersPerZone: number
   monthlyGrowth: number
   zoneStats: Array<{
@@ -42,6 +43,7 @@ interface ZoneData {
 const defaultZoneData: ZoneData = {
   totalZones: 0,
   totalMembers: 0,
+  totalSaleGroups: 0,
   averageMembersPerZone: 0,
   monthlyGrowth: 0,
   zoneStats: [],
@@ -171,13 +173,13 @@ export default function ZoneReportsPage() {
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Average per Zone</CardTitle>
+                    <CardTitle className="text-sm font-medium">Total Sale Groups</CardTitle>
                     <Activity className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{zoneData.averageMembersPerZone}</div>
+                    <div className="text-2xl font-bold">{zoneData.totalSaleGroups}</div>
                     <p className="text-xs text-muted-foreground">
-                      Members per zone on average
+                      Active sale groups across all zones
                     </p>
                   </CardContent>
                 </Card>
