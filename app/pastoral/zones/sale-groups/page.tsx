@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Users, Edit, Trash2, UserCheck, ArrowLeft } from 'lucide-react'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -39,7 +39,7 @@ interface SaleGroup {
   }
 }
 
-export default function SaleGroupsPage() {
+function SaleGroupsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedZoneId = searchParams.get('zoneId')
@@ -568,5 +568,13 @@ export default function SaleGroupsPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+  )
+}
+
+export default function SaleGroupsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SaleGroupsContent />
+    </Suspense>
   )
 }
