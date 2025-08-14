@@ -17,7 +17,7 @@ check-storage.js
 debug-image-upload.html
 
 # Scripts
-# scripts/
+scripts/
 
 # Large files
 package-lock.json
